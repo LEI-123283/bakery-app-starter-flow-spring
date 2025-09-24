@@ -29,79 +29,122 @@ import com.vaadin.starter.bakery.backend.repositories.OrderRepository;
 import com.vaadin.starter.bakery.backend.repositories.PickupLocationRepository;
 import com.vaadin.starter.bakery.backend.repositories.ProductRepository;
 import com.vaadin.starter.bakery.backend.repositories.UserRepository;
-
+/**
+ * {@code DataGenerator} é responsável por gerar dados de demonstração
+ * automaticamente quando o banco de dados está vazio. Ele cria usuários,
+ * produtos, locais de retirada e pedidos iniciais.
+ *
+ * <p>Essa classe é registrada como um componente Spring para ser executada
+ * automaticamente no ciclo de vida da aplicação.</p>
+ *
+ * @author ...
+ */
 @SpringComponent
 public class DataGenerator implements HasLogger {
 
-	private static final String[] FILLING = new String[] { "Strawberry", "Chocolate", "Blueberry", "Raspberry",
-			"Vanilla" };
-	private static final String[] TYPE = new String[] { "Cake", "Pastry", "Tart", "Muffin", "Biscuit", "Bread", "Bagel",
-			"Bun", "Brownie", "Cookie", "Cracker", "Cheese Cake" };
-	private static final String[] FIRST_NAME = new String[] { "Ori", "Amanda", "Octavia", "Laurel", "Lael", "Delilah",
-			"Jason", "Skyler", "Arsenio", "Haley", "Lionel", "Sylvia", "Jessica", "Lester", "Ferdinand", "Elaine",
-			"Griffin", "Kerry", "Dominique" };
-	private static final String[] LAST_NAME = new String[] { "Carter", "Castro", "Rich", "Irwin", "Moore", "Hendricks",
-			"Huber", "Patton", "Wilkinson", "Thornton", "Nunez", "Macias", "Gallegos", "Blevins", "Mejia", "Pickett",
-			"Whitney", "Farmer", "Henry", "Chen", "Macias", "Rowland", "Pierce", "Cortez", "Noble", "Howard", "Nixon",
-			"Mcbride", "Leblanc", "Russell", "Carver", "Benton", "Maldonado", "Lyons" };
+    /** Possíveis recheios dos produtos de padaria. */
+    private static final String[] FILLING = new String[] {
+            "Strawberry", "Chocolate", "Blueberry", "Raspberry", "Vanilla"
+    };
 
-	private final Random random = new Random(1L);
+    /** Tipos de produtos de padaria. */
+    private static final String[] TYPE = new String[] {
+            "Cake", "Pastry", "Tart", "Muffin", "Biscuit", "Bread", "Bagel",
+            "Bun", "Brownie", "Cookie", "Cracker", "Cheese Cake"
+    };
 
-	private OrderRepository orderRepository;
-	private UserRepository userRepository;
-	private ProductRepository productRepository;
-	private PickupLocationRepository pickupLocationRepository;
-	private PasswordEncoder passwordEncoder;
+    /** Lista de nomes próprios usados para gerar clientes fictícios. */
+    private static final String[] FIRST_NAME = new String[] {
+            "Ori", "Amanda", "Octavia", "Laurel", "Lael", "Delilah", "Jason",
+            "Skyler", "Arsenio", "Haley", "Lionel", "Sylvia", "Jessica", "Lester",
+            "Ferdinand", "Elaine", "Griffin", "Kerry", "Dominique"
+    };
 
-	@Autowired
-	public DataGenerator(OrderRepository orderRepository, UserRepository userRepository,
-			ProductRepository productRepository, PickupLocationRepository pickupLocationRepository,
-			PasswordEncoder passwordEncoder) {
-		this.orderRepository = orderRepository;
-		this.userRepository = userRepository;
-		this.productRepository = productRepository;
-		this.pickupLocationRepository = pickupLocationRepository;
-		this.passwordEncoder = passwordEncoder;
-	}
+    /** Lista de sobrenomes usados para gerar clientes fictícios. */
+    private static final String[] LAST_NAME = new String[] {
+            "Carter", "Castro", "Rich", "Irwin", "Moore", "Hendricks", "Huber",
+            "Patton", "Wilkinson", "Thornton", "Nunez", "Macias", "Gallegos",
+            "Blevins", "Mejia", "Pickett", "Whitney", "Farmer", "Henry", "Chen",
+            "Macias", "Rowland", "Pierce", "Cortez", "Noble", "Howard", "Nixon",
+            "Mcbride", "Leblanc", "Russell", "Carver", "Benton", "Maldonado", "Lyons"
+    };
 
-	@PostConstruct
-	public void loadData() {
-		if (userRepository.count() != 0L) {
-			getLogger().info("Using existing database");
-			return;
-		}
+    /** Gerador pseudoaleatório usado para criar dados fictícios. */
+    private final Random random = new Random(1L);
 
-		getLogger().info("Generating demo data");
+    private final OrderRepository orderRepository;
+    private final UserRepository userRepository;
+    private final ProductRepository productRepository;
+    private final PickupLocationRepository pickupLocationRepository;
+    private final PasswordEncoder passwordEncoder;
 
-		getLogger().info("... generating users");
-		User baker = createBaker(userRepository, passwordEncoder);
-		User barista = createBarista(userRepository, passwordEncoder);
-		createAdmin(userRepository, passwordEncoder);
-		// A set of products without constrains that can be deleted
-		createDeletableUsers(userRepository, passwordEncoder);
+    /**
+     * Construtor que injeta as dependências necessárias para gerar dados.
+     *
+     * @param orderRepository repositório de pedidos
+     * @param userRepository repositório de usuários
+     * @param productRepository repositório de produtos
+     * @param pickupLocationRepository repositório de locais de retirada
+     * @param passwordEncoder codificador de senhas
+     */
+    @Autowired
+    public DataGenerator(OrderRepository orderRepository,
+                         UserRepository userRepository,
+                         ProductRepository productRepository,
+                         PickupLocationRepository pickupLocationRepository,
+                         PasswordEncoder passwordEncoder) {
+        this.orderRepository = orderRepository;
+        this.userRepository = userRepository;
+        this.productRepository = productRepository;
+        this.pickupLocationRepository = pickupLocationRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
 
-		getLogger().info("... generating products");
-		// A set of products that will be used for creating orders.
-		Supplier<Product> productSupplier = createProducts(productRepository, 8);
-		// A set of products without relationships that can be deleted
-		createProducts(productRepository, 4);
+    /**
+     * Método chamado após a construção do bean. Se o banco de dados estiver vazio,
+     * gera dados de exemplo: usuários, produtos, locais de retirada e pedidos.
+     */
+    @PostConstruct
+    public void loadData() {
+        if (userRepository.count() != 0L) {
+            getLogger().info("Using existing database");
+            return;
+        }
 
-		getLogger().info("... generating pickup locations");
-		Supplier<PickupLocation> pickupLocationSupplier = createPickupLocations(pickupLocationRepository);
+        getLogger().info("Generating demo data");
 
-		getLogger().info("... generating orders");
-		createOrders(orderRepository, productSupplier, pickupLocationSupplier, barista, baker);
+        getLogger().info("... generating users");
+        User baker = createBaker(userRepository, passwordEncoder);
+        User barista = createBarista(userRepository, passwordEncoder);
+        createAdmin(userRepository, passwordEncoder);
+        createDeletableUsers(userRepository, passwordEncoder);
 
-		getLogger().info("Generated demo data");
-	}
+        getLogger().info("... generating products");
+        Supplier<Product> productSupplier = createProducts(productRepository, 8);
+        createProducts(productRepository, 4);
 
-	private void fillCustomer(Customer customer) {
-		String first = getRandom(FIRST_NAME);
-		String last = getRandom(LAST_NAME);
-		customer.setFullName(first + " " + last);
-		customer.setPhoneNumber(getRandomPhone());
-		if (random.nextInt(10) == 0) {
-			customer.setDetails("Very important customer");
+        getLogger().info("... generating pickup locations");
+        Supplier<PickupLocation> pickupLocationSupplier = createPickupLocations(pickupLocationRepository);
+
+        getLogger().info("... generating orders");
+        createOrders(orderRepository, productSupplier, pickupLocationSupplier, barista, baker);
+
+        getLogger().info("Generated demo data");
+    }
+
+    /**
+     * Preenche os dados de um cliente fictício com nome completo, telefone
+     * e eventualmente marca-o como "cliente muito importante".
+     *
+     * @param customer cliente a ser preenchido
+     */
+    private void fillCustomer(Customer customer) {
+        String first = getRandom(FIRST_NAME);
+        String last = getRandom(LAST_NAME);
+        customer.setFullName(first + " " + last);
+        customer.setPhoneNumber(getRandomPhone());
+        if (random.nextInt(10) == 0) {
+            customer.setDetails("Very important customer");
 		}
 	}
 
