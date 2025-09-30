@@ -32,6 +32,8 @@ import com.vaadin.starter.bakery.backend.repositories.OrderRepository;
 @Service
 public class OrderService implements CrudService<Order> {
 
+    // teste de conflito
+
 	private final OrderRepository orderRepository;
 
 	@Autowired
