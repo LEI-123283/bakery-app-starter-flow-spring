@@ -1,49 +1,55 @@
 package com.vaadin.starter.bakery.backend.data;
 
 /**
- * Classe utilitária que define os diferentes papéis (roles) disponíveis no sistema.
+ * Classe utilitária que define os papéis (roles) de utilizadores na aplicação.
  *
  * <p>
- * Os papéis são usados para controlar permissões de acesso às funcionalidades
- * e às views da aplicação. Cada papel é representado por uma constante {@code String}.
+ * Cada papel representa um conjunto de permissões e acesso a diferentes áreas
+ * da aplicação. Os papéis estão representados como constantes do tipo
+ * {@code String}.
  * </p>
  *
  * <ul>
- *   <li>{@link #BARISTA} - Usuário com permissões relacionadas ao preparo de bebidas.</li>
- *   <li>{@link #BAKER} - Usuário com permissões relacionadas ao preparo de alimentos.</li>
- *   <li>{@link #ADMIN} - Usuário administrador, com acesso a todas as views e permissões.</li>
+ *   <li>{@link #BARISTA} – Papel para utilizadores com permissões de barista.</li>
+ *   <li>{@link #BAKER} – Papel para utilizadores com permissões de padeiro.</li>
+ *   <li>{@link #ADMIN} – Papel de administrador, que implicitamente concede acesso
+ *       a todas as vistas da aplicação.</li>
  * </ul>
  *
- * A classe não pode ser instanciada.
+ * <p>
+ * Esta classe não pode ser instanciada. Use os métodos estáticos disponibilizados.
+ * </p>
  */
 public class Role {
 
-	/** Papel de usuário com permissões de barista. */
+	/** Papel atribuído a utilizadores com permissões de barista. */
 	public static final String BARISTA = "barista";
 
-	/** Papel de usuário com permissões de padeiro. */
+	/** Papel atribuído a utilizadores com permissões de padeiro. */
 	public static final String BAKER = "baker";
 
 	/**
-	 * Papel de usuário administrador.
+	 * Papel de administrador.
 	 * <p>
-	 * Este papel implicitamente concede acesso a todas as views e funcionalidades do sistema.
+	 * Este papel concede acesso a todas as vistas e funcionalidades da aplicação.
 	 * </p>
 	 */
 	public static final String ADMIN = "admin";
 
 	/**
 	 * Construtor privado para evitar instanciação.
-	 * A classe deve ser usada apenas de forma estática.
+	 * <p>
+	 * Esta classe deve ser usada apenas de forma estática.
+	 * </p>
 	 */
 	private Role() {
-		// Static methods and fields only
+		// Apenas métodos e campos estáticos
 	}
 
 	/**
-	 * Retorna todos os papéis disponíveis no sistema.
+	 * Devolve um array contendo todos os papéis definidos na aplicação.
 	 *
-	 * @return um array contendo {@link #BARISTA}, {@link #BAKER} e {@link #ADMIN}
+	 * @return um array de {@code String} com todos os papéis possíveis
 	 */
 	public static String[] getAllRoles() {
 		return new String[] { BARISTA, BAKER, ADMIN };
