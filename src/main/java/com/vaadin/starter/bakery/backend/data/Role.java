@@ -7,10 +7,6 @@ package com.vaadin.starter.bakery.backend.data;
  */
 public class Role {
 
-    /**
-     * Constante que representa o papel de barista no sistema.
-     * Usada para identificar usuários com permissões de barista.
-     */
     public static final String BARISTA = "barista";
 
     /**
