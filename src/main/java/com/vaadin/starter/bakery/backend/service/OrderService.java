@@ -32,10 +32,14 @@ import com.vaadin.starter.bakery.backend.repositories.OrderRepository;
 /**
  * Serviço de negócios para manipulação de {@link Order}.
  *
- * <p>Oferece métodos para salvar pedidos, adicionar comentários,
- * consultar estatísticas de entregas e gerar dados de dashboard.</p>
+ * <p>Responsável por:</p>
+ * <ul>
+ *     <li>Criar, atualizar e salvar pedidos</li>
+ *     <li>Adicionar comentários e histórico</li>
+ *     <li>Consultar estatísticas de entregas</li>
+ *     <li>Gerar dados para dashboards e relatórios</li>
+ * </ul>
  */
-
 @Service
 public class OrderService implements CrudService<Order> {
 
@@ -54,8 +58,14 @@ public class OrderService implements CrudService<Order> {
 	}
 
 	/**
-	 * Conjunto de estados considerados "não disponíveis"
-	 * (exclui DELIVERED, READY e CANCELLED).
+	 * Conjunto de estados considerados "não disponíveis".
+	 *
+	 * <p>São todos os estados exceto:
+	 * <ul>
+	 *   <li>{@link OrderState#DELIVERED}</li>
+	 *   <li>{@link OrderState#READY}</li>
+	 *   <li>{@link OrderState#CANCELLED}</li>
+	 * </ul>
 	 */
 	private static final Set<OrderState> notAvailableStates = Collections.unmodifiableSet(
 			EnumSet.complementOf(EnumSet.of(OrderState.DELIVERED, OrderState.READY, OrderState.CANCELLED)));
@@ -66,7 +76,7 @@ public class OrderService implements CrudService<Order> {
 	 * @param currentUser usuário que está salvando o pedido
 	 * @param id id do pedido (ou {@code null} para criar novo)
 	 * @param orderFiller função que preenche os dados do pedido
-	 * @return pedido persistido
+	 * @return pedido persistido no banco
 	 */
 	@Transactional(rollbackOn = Exception.class)
 	public Order saveOrder(User currentUser, Long id, BiConsumer<User, Order> orderFiller) {
@@ -80,19 +90,41 @@ public class OrderService implements CrudService<Order> {
 		return orderRepository.save(order);
 	}
 
+	/**
+	 * Salva diretamente um pedido existente ou novo.
+	 *
+	 * @param order entidade {@link Order} a ser salva
+	 * @return pedido persistido
+	 */
 	@Transactional(rollbackOn = Exception.class)
 	public Order saveOrder(Order order) {
 		return orderRepository.save(order);
 	}
 
+	/**
+	 * Adiciona um comentário ao histórico do pedido.
+	 *
+	 * @param currentUser usuário que adiciona o comentário
+	 * @param order pedido alvo
+	 * @param comment texto do comentário
+	 * @return pedido atualizado e salvo
+	 */
 	@Transactional(rollbackOn = Exception.class)
 	public Order addComment(User currentUser, Order order, String comment) {
 		order.addHistoryItem(currentUser, comment);
 		return orderRepository.save(order);
 	}
 
+	/**
+	 * Consulta pedidos com filtro de nome de cliente e/ou data de entrega posterior a uma data.
+	 *
+	 * @param optionalFilter filtro opcional pelo nome do cliente
+	 * @param optionalFilterDate filtro opcional pela data mínima de entrega
+	 * @param pageable informações de paginação
+	 * @return página de pedidos encontrados
+	 */
 	public Page<Order> findAnyMatchingAfterDueDate(Optional<String> optionalFilter,
-			Optional<LocalDate> optionalFilterDate, Pageable pageable) {
+												   Optional<LocalDate> optionalFilterDate, Pageable pageable) {
 		if (optionalFilter.isPresent() && !optionalFilter.get().isEmpty()) {
 			if (optionalFilterDate.isPresent()) {
 				return orderRepository.findByCustomerFullNameContainingIgnoreCaseAndDueDateAfter(
@@ -108,12 +140,24 @@ public class OrderService implements CrudService<Order> {
 			}
 		}
 	}
-	
+
+	/**
+	 * Busca pedidos com data de entrega a partir de hoje.
+	 *
+	 * @return lista de {@link OrderSummary} iniciando na data atual
+	 */
 	@Transactional
 	public List<OrderSummary> findAnyMatchingStartingToday() {
 		return orderRepository.findByDueDateGreaterThanEqual(LocalDate.now());
 	}
 
+	/**
+	 * Conta o total de pedidos com filtros opcionais.
+	 *
+	 * @param optionalFilter filtro opcional pelo nome do cliente
+	 * @param optionalFilterDate filtro opcional pela data mínima de entrega
+	 * @return quantidade de pedidos encontrados
+	 */
 	public long countAnyMatchingAfterDueDate(Optional<String> optionalFilter, Optional<LocalDate> optionalFilterDate) {
 		if (optionalFilter.isPresent() && optionalFilterDate.isPresent()) {
 			return orderRepository.countByCustomerFullNameContainingIgnoreCaseAndDueDateAfter(optionalFilter.get(),
@@ -127,6 +171,11 @@ public class OrderService implements CrudService<Order> {
 		}
 	}
 
+	/**
+	 * Calcula estatísticas de entregas do dia atual.
+	 *
+	 * @return objeto {@link DeliveryStats} com os dados
+	 */
 	private DeliveryStats getDeliveryStats() {
 		DeliveryStats stats = new DeliveryStats();
 		LocalDate today = LocalDate.now();
@@ -141,6 +190,14 @@ public class OrderService implements CrudService<Order> {
 		return stats;
 	}
 
+	/**
+	 * Gera dados de dashboard, incluindo estatísticas de entrega,
+	 * vendas por mês/ano e entregas por produto.
+	 *
+	 * @param month mês de referência
+	 * @param year ano de referência
+	 * @return objeto {@link DashboardData} preenchido
+	 */
 	public DashboardData getDashboardData(int month, int year) {
 		DashboardData data = new DashboardData();
 		data.setDeliveryStats(getDeliveryStats());
@@ -156,7 +213,7 @@ public class OrderService implements CrudService<Order> {
 			int y = year - (int) salesData[0];
 			int m = (int) salesData[1] - 1;
 			if (y == 0 && m == month - 1) {
-				// skip current month as it contains incomplete data
+				// ignora mês atual, pois contém dados incompletos
 				continue;
 			}
 			long count = (long) salesData[2];
@@ -174,16 +231,37 @@ public class OrderService implements CrudService<Order> {
 		return data;
 	}
 
+	/**
+	 * Recupera o número de entregas por dia em um determinado mês.
+	 *
+	 * @param month mês desejado
+	 * @param year ano desejado
+	 * @return lista de contagens de entregas por dia
+	 */
 	private List<Number> getDeliveriesPerDay(int month, int year) {
 		int daysInMonth = YearMonth.of(year, month).lengthOfMonth();
 		return flattenAndReplaceMissingWithNull(daysInMonth,
 				orderRepository.countPerDay(OrderState.DELIVERED, year, month));
 	}
 
+	/**
+	 * Recupera o número de entregas por mês em um ano.
+	 *
+	 * @param year ano desejado
+	 * @return lista de contagens de entregas por mês
+	 */
 	private List<Number> getDeliveriesPerMonth(int year) {
 		return flattenAndReplaceMissingWithNull(12, orderRepository.countPerMonth(OrderState.DELIVERED, year));
 	}
 
+	/**
+	 * Normaliza resultados de consultas de agregação,
+	 * preenchendo índices vazios com {@code null}.
+	 *
+	 * @param length tamanho esperado da lista
+	 * @param list resultados de agregação no formato [índice, valor]
+	 * @return lista normalizada
+	 */
 	private List<Number> flattenAndReplaceMissingWithNull(int length, List<Object[]> list) {
 		List<Number> counts = new ArrayList<>();
 		for (int i = 0; i < length; i++) {
@@ -196,11 +274,25 @@ public class OrderService implements CrudService<Order> {
 		return counts;
 	}
 
+	/** {@inheritDoc} */
 	@Override
 	public JpaRepository<Order, Long> getRepository() {
 		return orderRepository;
 	}
 
+	/**
+	 * Cria uma nova instância de pedido com valores padrão.
+	 *
+	 * <p>O pedido criado:</p>
+	 * <ul>
+	 *   <li>É associado ao {@code currentUser}</li>
+	 *   <li>Possui horário de entrega padrão às 16h</li>
+	 *   <li>Data de entrega definida para hoje</li>
+	 * </ul>
+	 *
+	 * @param currentUser usuário que cria o pedido
+	 * @return novo pedido inicializado
+	 */
 	@Override
 	@Transactional
 	public Order createNew(User currentUser) {
