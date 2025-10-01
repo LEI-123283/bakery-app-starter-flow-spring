@@ -1,5 +1,9 @@
 package com.vaadin.starter.bakery.backend.data;
 
+  /**
+ * comenatrio
+ * */
+
 public class Role {
 	public static final String BARISTA = "barista";
 	public static final String BAKER = "baker";
