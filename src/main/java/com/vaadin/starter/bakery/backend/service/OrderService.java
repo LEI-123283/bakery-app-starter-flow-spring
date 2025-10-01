@@ -29,22 +29,45 @@ import com.vaadin.starter.bakery.backend.data.entity.Product;
 import com.vaadin.starter.bakery.backend.data.entity.User;
 import com.vaadin.starter.bakery.backend.repositories.OrderRepository;
 
+/**
+ * Serviço de negócios para manipulação de {@link Order}.
+ *
+ * <p>Oferece métodos para salvar pedidos, adicionar comentários,
+ * consultar estatísticas de entregas e gerar dados de dashboard.</p>
+ */
+
 @Service
 public class OrderService implements CrudService<Order> {
 
-    // teste de conflito
-
+	/** Repositório JPA de pedidos. */
 	private final OrderRepository orderRepository;
 
+	/**
+	 * Construtor que injeta o repositório de pedidos.
+	 *
+	 * @param orderRepository instância de {@link OrderRepository}
+	 */
 	@Autowired
 	public OrderService(OrderRepository orderRepository) {
 		super();
 		this.orderRepository = orderRepository;
 	}
 
+	/**
+	 * Conjunto de estados considerados "não disponíveis"
+	 * (exclui DELIVERED, READY e CANCELLED).
+	 */
 	private static final Set<OrderState> notAvailableStates = Collections.unmodifiableSet(
 			EnumSet.complementOf(EnumSet.of(OrderState.DELIVERED, OrderState.READY, OrderState.CANCELLED)));
 
+	/**
+	 * Cria ou atualiza um pedido, aplicando lógica customizada via {@code orderFiller}.
+	 *
+	 * @param currentUser usuário que está salvando o pedido
+	 * @param id id do pedido (ou {@code null} para criar novo)
+	 * @param orderFiller função que preenche os dados do pedido
+	 * @return pedido persistido
+	 */
 	@Transactional(rollbackOn = Exception.class)
 	public Order saveOrder(User currentUser, Long id, BiConsumer<User, Order> orderFiller) {
 		Order order;
