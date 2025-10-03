@@ -12,7 +12,7 @@ import com.vaadin.starter.bakery.backend.data.entity.User;
 import com.vaadin.starter.bakery.backend.repositories.UserRepository;
 
 /**
- * Serviço para gerenciamento de operações CRUD relacionadas aos usuários.
+ * Serviço para gerenciamento de operações CRUD relacionadas a usuários.
  * Implementa a interface {@link FilterableCrudService} para fornecer funcionalidades de criação,
  * leitura, atualização e exclusão de entidades {@link User}, com suporte a filtros e paginação.
  * Inclui validações para impedir a modificação ou exclusão de usuários bloqueados e a exclusão de
