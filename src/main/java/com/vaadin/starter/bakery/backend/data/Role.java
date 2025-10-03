@@ -1,5 +1,6 @@
 package com.vaadin.starter.bakery.backend.data;
 
+
 /**
  * Classe utilitária que define os papéis (roles) de utilizadores na aplicação.
  *
@@ -20,6 +21,11 @@ package com.vaadin.starter.bakery.backend.data;
  * Esta classe não pode ser instanciada. Use os métodos estáticos disponibilizados.
  * </p>
  */
+
+  /**
+ * comenatrio
+ * */
+
 public class Role {
 
 	/** Papel atribuído a utilizadores com permissões de barista. */

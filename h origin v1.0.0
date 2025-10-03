@@ -1,0 +1,62 @@
+[33mtag v1.0.0[m
+Tagger: LEI-123293 <icpls@iscte-iul.pt>
+Date:   Wed Oct 1 20:51:53 2025 +0100
+
+Versão v1 estavel (teste tags)
+
+[33mcommit e86e4a30f6685f9551ef4d4c1b8ae86391d5fdc7[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mIP[m[33m, [m[1;33mtag: [m[1;33mv1.0.0[m[33m, [m[1;31morigin/nova-caracteristica[m[33m, [m[1;31morigin/IP[m[33m)[m
+Author: LEI-123293 <icpls@iscte-iul.pt>
+Date:   Tue Sep 30 17:24:25 2025 +0100
+
+    Ficheiro comentado em Javadoc parcialmente
+
+[1mdiff --git a/src/main/java/com/vaadin/starter/bakery/backend/service/OrderService.java b/src/main/java/com/vaadin/starter/bakery/backend/service/OrderService.java[m
+[1mindex 6b2700d..a017835 100644[m
+[1m--- a/src/main/java/com/vaadin/starter/bakery/backend/service/OrderService.java[m
+[1m+++ b/src/main/java/com/vaadin/starter/bakery/backend/service/OrderService.java[m
+[36m@@ -29,20 +29,45 @@[m [mimport com.vaadin.starter.bakery.backend.data.entity.Product;[m
+ import com.vaadin.starter.bakery.backend.data.entity.User;[m
+ import com.vaadin.starter.bakery.backend.repositories.OrderRepository;[m
+ [m
+[32m+[m[32m/**[m
+[32m+[m[32m * Serviço de negócios para manipulação de {@link Order}.[m
+[32m+[m[32m *[m
+[32m+[m[32m * <p>Oferece métodos para salvar pedidos, adicionar comentários,[m
+[32m+[m[32m * consultar estatísticas de entregas e gerar dados de dashboard.</p>[m
+[32m+[m[32m */[m
+[32m+[m
+ @Service[m
+ public class OrderService implements CrudService<Order> {[m
+ [m
+[32m+[m	[32m/** Repositório JPA de pedidos. */[m
+ 	private final OrderRepository orderRepository;[m
+ [m
+[32m+[m	[32m/**[m
+[32m+[m	[32m * Construtor que injeta o repositório de pedidos.[m
+[32m+[m	[32m *[m
+[32m+[m	[32m * @param orderRepository instância de {@link OrderRepository}[m
+[32m+[m	[32m */[m
+ 	@Autowired[m
+ 	public OrderService(OrderRepository orderRepository) {[m
+ 		super();[m
+ 		this.orderRepository = orderRepository;[m
+ 	}[m
+ [m
+[32m+[m	[32m/**[m
+[32m+[m	[32m * Conjunto de estados considerados "não disponíveis"[m
+[32m+[m	[32m * (exclui DELIVERED, READY e CANCELLED).[m
+[32m+[m	[32m */[m
+ 	private static final Set<OrderState> notAvailableStates = Collections.unmodifiableSet([m
+ 			EnumSet.complementOf(EnumSet.of(OrderState.DELIVERED, OrderState.READY, OrderState.CANCELLED)));[m
+ [m
+[32m+[m	[32m/**[m
+[32m+[m	[32m * Cria ou atualiza um pedido, aplicando lógica customizada via {@code orderFiller}.[m
+[32m+[m	[32m *[m
+[32m+[m	[32m * @param currentUser usuário que está salvando o pedido[m
+[32m+[m	[32m * @param id id do pedido (ou {@code null} para criar novo)[m
+[32m+[m	[32m * @param orderFiller função que preenche os dados do pedido[m
+[32m+[m	[32m * @return pedido persistido[m
+[32m+[m	[32m */[m
+ 	@Transactional(rollbackOn = Exception.class)[m
+ 	public Order saveOrder(User currentUser, Long id, BiConsumer<User, Order> orderFiller) {[m
+ 		Order order;[m
